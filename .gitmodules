@@ -1,0 +1,7 @@
+[submodule "backend"]
+	path = backend
+	url = https://github.com/gothinkster/golang-gin-realworld-example-app
+rm
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/stephanietuerk/realworld-frontend-react
