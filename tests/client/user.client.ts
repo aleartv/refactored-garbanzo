@@ -11,13 +11,16 @@ export class UserApiClient extends BaseApiClient {
 
   async createUser(userData: UserRegistrationRequest): Promise<APIResponse> {
     const response = await this.post('/users', userData);
-    const data = await response.json()
+    const data = await response.json() as UserResponse
     UserResponseSchema.parse(data)
     return response
     
   }
 
   async login(loginData: LoginRequest): Promise<APIResponse> {
-    return this.post('/users/login', loginData);
+    const response = await this.post('/users/login', loginData);
+    const data = await response.json() as LoginResponse
+    LoginResponseSchema.parse(data)
+    return response;
   }
 }

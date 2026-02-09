@@ -1,4 +1,4 @@
-import { test, request, APIResponse } from '@playwright/test';
+import { test, request, APIResponse, APIRequestContext } from '@playwright/test';
 import * as allure from "allure-js-commons";
 
 
@@ -10,7 +10,7 @@ export abstract class BaseApiClient {
   protected async request(
     method: string,
     endpoint: string,
-    options: unknown = {}
+    options: Parameters<APIRequestContext['fetch']>[1] = {}
   ): Promise<APIResponse> {
     return await test.step(`API request: ${method}, ${endpoint}`, async () => {
       const context = await request.newContext({
@@ -41,14 +41,14 @@ export abstract class BaseApiClient {
     return this.request('GET', endpoint, { headers });
   }
 
-  protected async post(endpoint: string, data?: any, headers?: Record<string, string>): Promise<APIResponse> {
+  protected async post(endpoint: string, data?: Record<string, string>, headers?: Record<string, string>): Promise<APIResponse> {
     return this.request('POST', endpoint, {
       headers: { 'Content-Type': 'application/json', ...headers },
       data: JSON.stringify(data)
     });
   }
 
-  protected async put(endpoint: string, data?: any, headers?: Record<string, string>): Promise<APIResponse> {
+  protected async put(endpoint: string, data?: Record<string, string>, headers?: Record<string, string>): Promise<APIResponse> {
     return this.request('PUT', endpoint, {
       headers: { 'Content-Type': 'application/json', ...headers },
       data: JSON.stringify(data)

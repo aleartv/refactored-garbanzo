@@ -18,7 +18,7 @@ export const LoginResponseSchema = z.object({
   }).optional(),
   errors: z.object({
     login: z.string()
-  })
+  }).optional()
 });
 export type LoginResponse = z.infer<typeof LoginResponseSchema>
 

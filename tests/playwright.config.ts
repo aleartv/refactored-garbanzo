@@ -35,9 +35,20 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'API',
-      testDir: 'tests/api'
+      name: 'api',
+      testDir: 'tests/api',
+      use: {
+        baseURL: 'http://localhost:8080/api',
+      }
+    },
+    {
+      name: 'e2e',
+      testDir: 'tests/e2e',
+      use: {
+        baseURL: 'http://localhost:5174',
+      }
     }
+
   ],
 
   /* Run your local dev server before starting the tests */

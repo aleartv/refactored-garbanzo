@@ -2,6 +2,7 @@ import { test, expect } from '../../fixtures'
 import { createUserRegistrationData } from "../../factories/user.factory";
 import { createLoginData } from "../../factories/login.factory";
 import { UserApiClient } from "../../client/user.client";
+import { LoginResponse } from '../../schemas/login.schema';
 
 test.describe('POST /login', () => {
   let userClient: UserApiClient;
@@ -31,11 +32,11 @@ test.describe('POST /login', () => {
       const loginData = createLoginData(userData.user.email, userData.user.password)
 
       const response = await userClient.login(loginData)
-      const data = await response.json()
+      const data = await response.json() as LoginResponse
 
       expect(response.status()).toBe(200)
-      expect(data.user.email).toEqual(userData.user.email)
-      expect(data.user.username).toEqual(userData.user.username)
+      expect(data.user!.email).toEqual(userData.user.email)
+      expect(data.user!.username).toEqual(userData.user.username)
     })
   })
 
@@ -53,8 +54,8 @@ test.describe('POST /login', () => {
       const response = await userClient.login(loginData)
 
       expect(response.status()).toBe(401)
-      const data = await response.json()
-      expect(data.errors.login).toBe('Not Registered email or invalid password')
+      const data = await response.json() as LoginResponse
+      expect(data.errors!.login).toBe('Not Registered email or invalid password')
     })
   })
 })

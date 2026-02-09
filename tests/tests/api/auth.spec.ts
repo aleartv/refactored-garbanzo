@@ -1,12 +1,12 @@
 import { test, expect } from '../../fixtures'
 import { createUserRegistrationData } from "../../factories/user.factory";
 import { UserApiClient } from "../../client/user.client";
-import { UserRegistrationRequest } from '../../schemas/user.schema';
+import { UserRegistrationRequest, UserResponse } from '../../schemas/user.schema';
 
 test.describe('POST /users', () => {
   let userClient: UserApiClient;
 
-  test.beforeEach(async ({ baseURL, db }) => {
+  test.beforeEach(({ baseURL, db }) => {
     userClient = new UserApiClient(baseURL);
 
     try {
@@ -23,7 +23,7 @@ test.describe('POST /users', () => {
     const userData = createUserRegistrationData();
 
     const response = await userClient.createUser(userData)
-    const data = await response.json()
+    const data = await response.json() as UserResponse
       
     expect(response.status()).toBe(201)
     expect(data.user!.email).toEqual(userData.user.email)
@@ -44,8 +44,8 @@ test.describe('POST /users', () => {
       const response = await userClient.createUser(duplicatedUserData)
 
       expect(response.status()).toBe(422)
-      const data = await response.json()
-      expect(data.errors.database).toBe('UNIQUE constraint failed: user_models.email')
+      const data = await response.json() as UserResponse
+      expect(data.errors!.database).toBe('UNIQUE constraint failed: user_models.email')
     })
   })
 
@@ -75,8 +75,8 @@ test.describe('POST /users', () => {
       
       const response = await userClient.createUser(fullUserData as UserRegistrationRequest);
       expect(response.status()).toBe(422)
-      const data = await response.json()
-      expect(data.errors[expectedError.path]).toBe(expectedError.message)
+      const data = await response.json() as UserResponse
+      expect(data.errors![expectedError.path]).toBe(expectedError.message)
     });
   });
 });
