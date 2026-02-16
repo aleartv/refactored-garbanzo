@@ -1,11 +1,23 @@
-import { faker } from '@faker-js/faker'
-import { UserRegistrationData, UserRegistrationRequest } from '../schemas/user.schema'
+import { fakerRU as faker } from "@faker-js/faker";
+import {
+  UserRegistrationData,
+  UserRegistrationRequest,
+} from "../schemas/user.schema";
+import { withTestStep } from ".";
 
-export const createUserRegistrationData = (overrides?: Partial<UserRegistrationData>): UserRegistrationRequest => ({
-  user: {
-    email: faker.internet.email(),
-    password: faker.internet.password({ length: 12 }),
-    username: faker.internet.username(),
-    ...overrides,
-  }
-});
+export const createUserRegistrationData = withTestStep("User request")(
+  (overrides?: Partial<UserRegistrationData> | UserRegistrationRequest): UserRegistrationRequest => {
+    if (overrides && 'user' in overrides) {
+      return overrides;
+    } else {
+      return {
+        user: {
+          email: faker.internet.email(),
+          password: faker.internet.password({ length: 12 }),
+          username: faker.internet.username(),
+          ...overrides,
+        },
+      };
+    }
+  },
+);

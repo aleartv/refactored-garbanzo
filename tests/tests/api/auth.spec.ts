@@ -1,82 +1,77 @@
-import { test, expect } from '../../fixtures'
+import { test, expect } from "../../fixtures/index";
 import { createUserRegistrationData } from "../../factories/user.factory";
-import { UserApiClient } from "../../client/user.client";
-import { UserRegistrationRequest, UserResponse } from '../../schemas/user.schema';
 
-test.describe('POST /users', () => {
-  let userClient: UserApiClient;
+test.describe("POST /users", () => {
+  test.beforeEach(({ db }) => {
+    db.deleteFrom("article_tags")
+    db.deleteFrom("article_models");
+    db.deleteFrom("article_user_models");
+    db.deleteFrom("user_models");
+  });
 
-  test.beforeEach(({ baseURL, db }) => {
-    userClient = new UserApiClient(baseURL);
+  test("Should successfully register a user with valid credentials", async ({
+    userClient,
+  }) => {
+    const userData = await createUserRegistrationData();
+    const { response, validated } = await userClient.createUser(userData);
+    expect({ response, validated }).toBeValidUserCreation(userData.user);
+  });
 
-    try {
-      db.prepare('DELETE FROM user_models').run();
-      console.log('Cleaned up users table');
-    } catch (error) {
-      console.warn('Could not clean users table:', (error as Error).message);
-    } finally {
-      db.close();
-    }
-  })
+  test("Should NOT register with duplicate email", async ({ userClient }) => {
+    const userData = await createUserRegistrationData();
 
-  test('should register user successfully', async () => {
-    const userData = createUserRegistrationData();
+    await test.step("register first user", async () => {
+      const { response, validated } = await userClient.createUser(userData);
+      expect({ response, validated }).toBeValidUserCreation(userData.user);
+    });
 
-    const response = await userClient.createUser(userData)
-    const data = await response.json() as UserResponse
-      
-    expect(response.status()).toBe(201)
-    expect(data.user!.email).toEqual(userData.user.email)
-    expect(data.user!.username).toEqual(userData.user.username)
-  })
+    await test.step("try to register second user with same email", async () => {
+      const duplicatedUserData = await createUserRegistrationData({
+        email: userData.user.email,
+      });
+      const { response, validated } = await userClient.createUser(
+        duplicatedUserData,
+      );
 
-  test('should not register with duplicate email', async () => {
-    const userData = createUserRegistrationData();
-
-    await test.step('register first user', async () => {
-      const response = await userClient.createUser(userData)
-      expect(response.status()).toBe(201)
-    })
-
-    await test.step('try to register second user with same email', async () => {
-      const duplicatedUserData = createUserRegistrationData({ email: userData.user.email })
-
-      const response = await userClient.createUser(duplicatedUserData)
-
-      expect(response.status()).toBe(422)
-      const data = await response.json() as UserResponse
-      expect(data.errors!.database).toBe('UNIQUE constraint failed: user_models.email')
-    })
-  })
+      expect({ response, validated }).toBeInvalidUserCreation({
+        status: 422,
+        message: "UNIQUE constraint failed: user_models.email",
+      });
+    });
+  });
 
   const invalidRegistrationCases = [
     {
-      name: 'invalid email format',
-      userData: { email: 'not_email' },
-      expectedError: { path: 'Email', message: '{key: email}' }
+      name: "invalid email format",
+      userData: { email: "not_email" },
+      expectedError: { status: 422, path: "Email", message: "{key: email}" },
     },
     {
-      name: 'empty username',
-      userData: { username: '' },
-      expectedError: { path: 'Username', message: '{key: required}' }
+      name: "empty username",
+      userData: { username: "" },
+      expectedError: {
+        status: 422,
+        path: "Username",
+        message: "{key: required}",
+      },
     },
     {
-      name: 'missing password',
-      userData: { user: { email: 'test@example.com', username: 'username' } },
-      expectedError: { path: 'Password', message: '{key: required}' }
-    }
+      name: "missing password",
+      userData: { user: { email: "test@example.com", username: "username" } },
+      expectedError: {
+        status: 422,
+        path: "Password",
+        message: "{key: required}",
+      },
+    },
   ];
 
   invalidRegistrationCases.forEach(({ name, userData, expectedError }) => {
-    test(`should not register user with ${name}`, async () => {
-      const fullUserData = typeof userData.user === 'object' ? 
-        userData : 
-        createUserRegistrationData(userData);
-      
-      const response = await userClient.createUser(fullUserData as UserRegistrationRequest);
-      expect(response.status()).toBe(422)
-      const data = await response.json() as UserResponse
-      expect(data.errors![expectedError.path]).toBe(expectedError.message)
+    test(`Should NOT register user with ${name}`, async ({ userClient }) => {
+      const data = await createUserRegistrationData(userData);
+
+      const { response, validated } = await userClient.createUser(data);
+      expect({ response, validated }).toBeInvalidUserCreation(expectedError);
     });
   });
 });

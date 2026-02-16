@@ -1,8 +1,9 @@
 import eslint from '@eslint/js';
 import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
+import playwright from 'eslint-plugin-playwright'
 
-export default defineConfig(
+export default defineConfig([
   {
     ignores: ['dist/**']
   },
@@ -15,4 +16,8 @@ export default defineConfig(
       },
     },
   },
-);
+  {
+    files: ['tests/**'],
+    extends: [playwright.configs['flat/recommended']],
+  },
+]);
